@@ -1,10 +1,14 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from dotenv import load_dotenv
 import screen_capture
 import voice_capture
 import requests
 import os
 import uvicorn
+
+# Load environment variables from .env file
+load_dotenv()
 
 app = FastAPI()
 
@@ -18,6 +22,9 @@ app.add_middleware(
 def get_ai_response(question):
     api_key = os.getenv("GROQ_API_KEY")
     
+    if not api_key:
+        return "ERROR: GROQ_API_KEY not found in environment variables"
+    
     try:
         response = requests.post(
             "https://api.groq.com/openai/v1/chat/completions",
@@ -29,7 +36,16 @@ def get_ai_response(question):
             },
             timeout=10
         )
-        return response.json()["choices"][0]["message"]["content"]
+        
+        if response.status_code == 200:
+            data = response.json()
+            if 'choices' in data and len(data['choices']) > 0:
+                return data['choices'][0]['message']['content']
+            else:
+                return "AI response format error: No choices found"
+        else:
+            return f"API Error {response.status_code}: {response.text}"
+            
     except Exception as e:
         return f"AI error: {str(e)}"
 
