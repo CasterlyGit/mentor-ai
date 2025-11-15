@@ -7,8 +7,17 @@ import requests
 import os
 import uvicorn
 
-# Load environment variables from .env file
-load_dotenv()
+# Load environment variables from .env file - EXPLICIT PATH
+env_path = os.path.join(os.path.dirname(__file__), '.env')
+print(f"Loading .env from: {env_path}")
+load_dotenv(env_path)
+
+# Debug: Check if API key is loaded
+api_key = os.getenv("GROQ_API_KEY")
+if api_key:
+    print(f"✅ API Key loaded: {api_key[:10]}...")
+else:
+    print("❌ API Key NOT loaded!")
 
 app = FastAPI()
 
@@ -22,8 +31,8 @@ app.add_middleware(
 def get_ai_response(question):
     api_key = os.getenv("GROQ_API_KEY")
     
-    if not api_key:
-        return "ERROR: GROQ_API_KEY not found in environment variables"
+    if not api_key or api_key == "gsk_yourActualKeyHere":
+        return "ERROR: GROQ_API_KEY not properly configured in .env file"
     
     try:
         response = requests.post(
